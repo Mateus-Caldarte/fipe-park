@@ -7,7 +7,7 @@ import {
   fetchYears,
   fetchValue,
 } from "../services/api";
-import { FaSpinner } from "react-icons/fa"; // Ícone de carregamento
+import { FaSpinner } from "react-icons/fa";
 
 const VehicleForm: React.FC = () => {
   const dispatch = useDispatch();
@@ -27,20 +27,20 @@ const VehicleForm: React.FC = () => {
   const [models, setModels] = useState<{ label: string; value: string }[]>([]);
   const [years, setYears] = useState<{ label: string; value: string }[]>([]);
   const [loading] = useState(false);
-  const [isBrandLoading, setIsBrandLoading] = useState(false); // Para controlar o carregamento das marcas
-  const [isModelLoading, setIsModelLoading] = useState(false); // Para controlar o carregamento dos modelos
+  const [isBrandLoading, setIsBrandLoading] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(false);
 
   useEffect(() => {
     const loadBrands = async () => {
       if (vehicle.vehicleType) {
-        setIsBrandLoading(true); // Ativa o loading quando começa a buscar as marcas
+        setIsBrandLoading(true);
         try {
           const data = await fetchBrandsByType(vehicle.vehicleType);
           setBrands(data);
         } catch (error) {
           setBrands([]);
         } finally {
-          setIsBrandLoading(false); // Desativa o loading após a busca
+          setIsBrandLoading(false);
         }
       } else {
         setBrands([]);
@@ -75,7 +75,7 @@ const VehicleForm: React.FC = () => {
     setVehicle({ ...vehicle, brand: brandId, model: "", year: "", value: 0 });
 
     if (vehicle.vehicleType && brandId) {
-      setIsModelLoading(true); // Ativa o loading antes de buscar os modelos
+      setIsModelLoading(true);
       try {
         const data = await fetchModels(vehicle.vehicleType, brandId);
         if (data && Array.isArray(data)) {
@@ -92,7 +92,7 @@ const VehicleForm: React.FC = () => {
       } catch (error) {
         setModels([]);
       } finally {
-        setIsModelLoading(false); // Desativa o loading após a busca
+        setIsModelLoading(false);
       }
     } else {
       setModels([]);
@@ -147,7 +147,6 @@ const VehicleForm: React.FC = () => {
         </h2>
 
         <div className="space-y-6">
-          {/* Tipo de Veículo */}
           <div>
             <label
               htmlFor="vehicleType"
@@ -169,7 +168,6 @@ const VehicleForm: React.FC = () => {
             </select>
           </div>
 
-          {/* Marca */}
           <div>
             <label
               htmlFor="brand"
@@ -201,7 +199,6 @@ const VehicleForm: React.FC = () => {
             )}
           </div>
 
-          {/* Modelo */}
           <div>
             <label
               htmlFor="model"
@@ -233,7 +230,6 @@ const VehicleForm: React.FC = () => {
             )}
           </div>
 
-          {/* Ano */}
           <div>
             <label
               htmlFor="year"
@@ -258,7 +254,6 @@ const VehicleForm: React.FC = () => {
             </select>
           </div>
 
-          {/* Placa */}
           <div>
             <label
               htmlFor="plate"
@@ -276,7 +271,6 @@ const VehicleForm: React.FC = () => {
             />
           </div>
 
-          {/* Cor */}
           <div>
             <label
               htmlFor="color"
@@ -294,7 +288,6 @@ const VehicleForm: React.FC = () => {
             />
           </div>
 
-          {/* Status */}
           <div>
             <label
               htmlFor="status"
@@ -314,7 +307,6 @@ const VehicleForm: React.FC = () => {
             </select>
           </div>
 
-          {/* Valor */}
           <div>
             <label
               htmlFor="value"
