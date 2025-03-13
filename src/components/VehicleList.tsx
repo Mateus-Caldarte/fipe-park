@@ -3,6 +3,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { removeVehicle, updateVehicle } from "../store/ducks/vehicles/slice";
 import { VehiclesState } from "../store/ducks/vehicles/types";
 
+// Funções para as máscaras
+const maskPlate = (plate: string) => {
+  return plate
+    .toUpperCase()
+    .replace(/[^A-Za-z0-9]/g, "")
+    .slice(0, 7); // Limita a 7 caracteres
+};
+
+const maskYear = (year: string) => {
+  return year.replace(/\D/g, "").slice(0, 4); // Limita a 4 dígitos
+};
+
 const VehicleList: React.FC = () => {
   const { data } = useSelector(
     (state: { vehicles: VehiclesState }) => state.vehicles
@@ -30,6 +42,17 @@ const VehicleList: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (
+      !formValues.brand ||
+      !formValues.model ||
+      !formValues.plate ||
+      !formValues.year ||
+      !formValues.color
+    ) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
+
     if (editingVehicle) {
       const existingVehicle = data.find(
         (v) => v.brand === formValues.brand && v.model === formValues.model
@@ -60,9 +83,26 @@ const VehicleList: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let updatedValue = value;
+
+    // Aplica as máscaras
+    if (name === "plate") {
+      updatedValue = maskPlate(value);
+    } else if (name === "year") {
+      updatedValue = maskYear(value);
+      // Restringe o ano a não ser maior que o ano atual
+      const currentYear = new Date().getFullYear().toString();
+      if (updatedValue > currentYear) {
+        updatedValue = currentYear; // Corrige se o ano for maior que o ano atual
+      }
+    } else if (name === "color") {
+      // Converte a cor para maiúscula
+      updatedValue = value.toUpperCase();
+    }
+
     setFormValues((prevValues) => ({
       ...prevValues,
-      [name]: value,
+      [name]: updatedValue,
     }));
   };
 
@@ -82,22 +122,24 @@ const VehicleList: React.FC = () => {
             Editar Veículo
           </h3>
           <div className="grid gap-4">
+            {/* Marca e Modelo são somente leitura */}
             <input
               type="text"
               name="brand"
               value={formValues.brand}
-              onChange={handleChange}
+              readOnly
               placeholder="Marca"
-              className="border-2 p-2 rounded-md"
+              className="border-2 p-2 rounded-md bg-gray-200 cursor-not-allowed"
             />
             <input
               type="text"
               name="model"
               value={formValues.model}
-              onChange={handleChange}
+              readOnly
               placeholder="Modelo"
-              className="border-2 p-2 rounded-md"
+              className="border-2 p-2 rounded-md bg-gray-200 cursor-not-allowed"
             />
+            {/* Campo de Placa com máscara */}
             <input
               type="text"
               name="plate"
@@ -106,6 +148,7 @@ const VehicleList: React.FC = () => {
               placeholder="Placa"
               className="border-2 p-2 rounded-md"
             />
+            {/* Campo de Ano com máscara */}
             <input
               type="text"
               name="year"
@@ -153,9 +196,13 @@ const VehicleList: React.FC = () => {
                     {vehicle.plate} • {vehicle.year} • {vehicle.color}
                   </span>
                 </div>
+              </div>
+
+              {/* Botões à direita */}
+              <div className="flex ml-auto">
                 <button
                   onClick={() => startEditing(vehicle)}
-                  className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition-all mb-2 md:mb-0 mr-4 ml-7"
+                  className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition-all mb-2 md:mb-0 mr-4"
                 >
                   Editar
                 </button>

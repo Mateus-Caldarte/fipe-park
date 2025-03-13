@@ -110,13 +110,24 @@ const VehicleForm: React.FC = () => {
   };
 
   const handleBrandChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const brandId = e.target.value;
-    setVehicle({ ...vehicle, brand: brandId, model: "", year: "", value: 0 });
+    const selectedBrandId = e.target.value;
+    const selectedBrand = brands.find(
+      (brand) => brand.value === selectedBrandId
+    );
+    const brandName = selectedBrand ? selectedBrand.label : ""; // Pega o nome da marca
 
-    if (vehicle.vehicleType && brandId) {
+    setVehicle((prev) => ({
+      ...prev,
+      brand: brandName, // Salva o nome da marca em vez do ID
+      model: "",
+      year: "",
+      value: 0,
+    }));
+
+    if (vehicle.vehicleType && selectedBrandId) {
       setIsModelLoading(true);
       try {
-        const data = await fetchModels(vehicle.vehicleType, brandId);
+        const data = await fetchModels(vehicle.vehicleType, selectedBrandId);
         if (data && Array.isArray(data)) {
           const formattedModels = data.map(
             (item: { label: string; value: string }) => ({
@@ -140,7 +151,7 @@ const VehicleForm: React.FC = () => {
 
   const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const modelId = e.target.value;
-    setVehicle({ ...vehicle, model: modelId, year: "", value: 0 });
+    setVehicle((prev) => ({ ...prev, model: modelId, year: "", value: 0 }));
 
     if (vehicle.brand && modelId) {
       try {
@@ -202,7 +213,7 @@ const VehicleForm: React.FC = () => {
       { ...vehicle, id: new Date().toISOString() },
     ];
     setVehicles(updatedVehicles);
-    saveVehiclesToLocalStorage(updatedVehicles);
+    saveVehiclesToLocalStorage(updatedVehicles); // Salva a lista com o nome da marca
     dispatch(addVehicle({ ...vehicle, id: new Date().toISOString() }));
 
     setSuccessMessage("Veículo cadastrado com sucesso!");
@@ -270,7 +281,10 @@ const VehicleForm: React.FC = () => {
               id="brand"
               className="block w-full mt-2 p-4 rounded-lg border border-gray-300 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={handleBrandChange}
-              value={vehicle.brand}
+              value={
+                brands.find((brand) => brand.label === vehicle.brand)?.value ||
+                ""
+              }
               disabled={isBrandLoading || !vehicle.vehicleType}
             >
               <option value="">Selecione a Marca</option>
@@ -384,31 +398,22 @@ const VehicleForm: React.FC = () => {
               name="status"
               id="status"
               className="block w-full mt-2 p-4 rounded-lg border border-gray-300 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onChange={handleChange}
               value={vehicle.status}
+              onChange={handleChange}
             >
-              <option value="Disponível">Disponível</option>
-              <option value="Indisponível">Vendido</option>
-              <option value="Indisponível">Em manutenção</option>
+              <option value="">Selecione o Status</option>
+              <option value="disponível">Disponível</option>
+              <option value="indisponível">Indisponível</option>
             </select>
           </div>
         </div>
 
-        <div className="flex justify-center mt-6">
-          <button
-            type="submit"
-            className="px-8 py-3 bg-blue-500 text-white font-semibold text-lg rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={
-              loading || !vehicle.brand || !vehicle.model || !vehicle.year
-            }
-          >
-            {loading ? (
-              <FaSpinner className="animate-spin inline-block mr-2" />
-            ) : (
-              "Adicionar Veículo"
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="mt-6 w-full py-4 px-6 bg-blue-500 text-white text-xl font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-600"
+        >
+          Cadastrar Veículo
+        </button>
       </form>
     </div>
   );
