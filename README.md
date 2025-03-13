@@ -20,14 +20,14 @@ git clone https://github.com/Mateus-Caldarte/fipe-park.git
 
 ## Como rodar o projeto
 
-# Entre na pasta no projeto
+- **Entre na pasta no projeto com o comando abaixo**
 
-cd fipe-park
+- **cd fipe-park**
 
-# Instale as depenências
+## Instale as depenências com o comando abaixo
 
-npm install
+- **npm install**
 
-# Rode o projeto
+## Rode o projeto com o comando abaixo
 
-npm run dev - quando abrir a url local no terminal basta segurar o ctrl ou command + clique na mesma
+- **npm run dev - quando abrir a url local no terminal basta segurar o ctrl ou command + clique na mesma**
