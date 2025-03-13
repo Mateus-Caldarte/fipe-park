@@ -4,8 +4,8 @@ import {
   removeVehicle,
   updateVehicle,
   setVehicles,
-} from "../store/ducks/vehicles/slice";
-import { VehiclesState } from "../store/ducks/vehicles/types";
+} from "../../../../store/ducks/vehicles/slice";
+import { VehiclesState } from "../../../../store/ducks/vehicles/types";
 import { FaTimes } from "react-icons/fa";
 
 const maskPlate = (plate: string) => {

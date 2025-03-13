@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { VehiclesState, Vehicle } from "./types";
 
-// Função para sincronizar os dados com o localStorage
 const syncWithLocalStorage = (data: Vehicle[]) => {
   localStorage.setItem("vehicles", JSON.stringify(data));
 };

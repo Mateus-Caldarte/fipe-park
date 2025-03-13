@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import VehicleForm from "../components/VehicleForm";
-import VehicleList from "../components/VehicleList";
+import VehicleForm from "../components/atomic/organisms/VehicleForm/VehicleForm";
+import VehicleList from "../components/atomic/organisms/VehiclesList/VehicleList";
 import { FaTimes } from "react-icons/fa";
 
 const Home: React.FC = () => {

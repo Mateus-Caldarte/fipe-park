@@ -31,30 +31,3 @@ export const fetchModels = async (vehicleType: string, brandId: string) => {
     return [];
   }
 };
-
-export const fetchYears = async (brandId: string, modelId: string) => {
-  try {
-    const response = await axios.get(`${baseURL}anos/v1/${brandId}/${modelId}`);
-    return response.data.map((item: { nome: string; valor: string }) => ({
-      label: item.nome,
-      value: item.valor,
-    }));
-  } catch (error) {
-    return [];
-  }
-};
-
-export const fetchValue = async (
-  brandId: string,
-  modelId: string,
-  year: string
-) => {
-  try {
-    const response = await axios.get(
-      `${baseURL}preco/v1/${brandId}/${modelId}/${year}`
-    );
-    return response.data;
-  } catch (error) {
-    return { valor: 0 };
-  }
-};

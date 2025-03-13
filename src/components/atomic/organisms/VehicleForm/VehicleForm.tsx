@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addVehicle } from "../store/ducks/vehicles/slice";
-import {
-  fetchBrandsByType,
-  fetchModels,
-  fetchYears,
-  fetchValue,
-} from "../services/api";
+import { useDispatch } from "react-redux";
+import { addVehicle } from "../../../../store/ducks/vehicles/slice";
+import { fetchBrandsByType, fetchModels } from "../../../../services/api";
 import { FaSpinner } from "react-icons/fa";
 
 const maskPlate = (plate: string) => {
@@ -44,7 +39,6 @@ const VehicleForm: React.FC = () => {
 
   const [brands, setBrands] = useState<{ label: string; value: string }[]>([]);
   const [models, setModels] = useState<{ label: string; value: string }[]>([]);
-  const [years, setYears] = useState<{ label: string; value: string }[]>([]);
   const [isBrandLoading, setIsBrandLoading] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [vehicles, setVehicles] = useState<any[]>(
@@ -152,17 +146,6 @@ const VehicleForm: React.FC = () => {
   const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const modelId = e.target.value;
     setVehicle((prev) => ({ ...prev, model: modelId, year: "", value: 0 }));
-
-    if (vehicle.brand && modelId) {
-      try {
-        const data = await fetchYears(vehicle.brand, modelId);
-        setYears(data);
-      } catch (error) {
-        setYears([]);
-      }
-    } else {
-      setYears([]);
-    }
   };
 
   const handleYearChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,17 +159,6 @@ const VehicleForm: React.FC = () => {
     }
 
     setVehicle({ ...vehicle, year: year.slice(0, 4) });
-
-    if (vehicle.brand && vehicle.model && year) {
-      try {
-        const valueData = await fetchValue(vehicle.brand, vehicle.model, year);
-        setVehicle((prev) => ({ ...prev, value: valueData.valor }));
-      } catch (error) {
-        setVehicle((prev) => ({ ...prev, value: 0 }));
-      }
-    } else {
-      setVehicle((prev) => ({ ...prev, value: 0 }));
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
