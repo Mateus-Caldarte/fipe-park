@@ -6,6 +6,7 @@ import {
   setVehicles,
 } from "../store/ducks/vehicles/slice";
 import { VehiclesState } from "../store/ducks/vehicles/types";
+import { FaTimes } from "react-icons/fa";
 
 const maskPlate = (plate: string) => {
   return plate
@@ -110,8 +111,6 @@ const VehicleList: React.FC = () => {
       color: "",
       status: "Disponível",
     });
-
-    window.location.reload();
   };
 
   const handleChange = (
@@ -143,82 +142,10 @@ const VehicleList: React.FC = () => {
 
     const updatedVehicles = data.filter((vehicle) => vehicle.id !== id);
     localStorage.setItem("vehicles", JSON.stringify(updatedVehicles));
-
-    window.location.reload();
   };
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-semibold text-gray-700 mb-4 text-center">
-        Lista de Veículos Cadastrados
-      </h2>
-
-      {editingVehicle && (
-        <div className="bg-gray-200 p-6 rounded-lg mb-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">
-            Editar Veículo
-          </h3>
-          <div className="grid gap-4">
-            <input
-              type="text"
-              name="brand"
-              value={`${formValues.brand} - Somente leitura na edição`}
-              readOnly
-              placeholder="Marca"
-              className="border-2 p-2 rounded-md bg-gray-200 cursor-not-allowed"
-            />
-            <input
-              type="text"
-              name="model"
-              value={formValues.model}
-              readOnly
-              placeholder="Modelo"
-              className="border-2 p-2 rounded-md bg-gray-200 cursor-not-allowed"
-            />
-            <input
-              type="text"
-              name="plate"
-              value={formValues.plate}
-              onChange={handleChange}
-              placeholder="Placa"
-              className="border-2 p-2 rounded-md"
-            />
-            <input
-              type="text"
-              name="year"
-              value={formValues.year}
-              onChange={handleChange}
-              placeholder="Ano"
-              className="border-2 p-2 rounded-md"
-            />
-            <input
-              type="text"
-              name="color"
-              value={formValues.color}
-              onChange={handleChange}
-              placeholder="Cor"
-              className="border-2 p-2 rounded-md"
-            />
-            <select
-              name="status"
-              value={formValues.status}
-              onChange={handleChange}
-              className="border-2 p-2 rounded-md"
-            >
-              <option value="Disponível">Disponível</option>
-              <option value="Vendido">Vendido</option>
-              <option value="Em manutenção">Em manutenção</option>
-            </select>
-            <button
-              onClick={handleSave}
-              className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-all"
-            >
-              Salvar Alterações
-            </button>
-          </div>
-        </div>
-      )}
-
       <ul className="space-y-4">
         {data.length === 0 ? (
           <li className="text-center text-gray-500">
@@ -261,6 +188,75 @@ const VehicleList: React.FC = () => {
           ))
         )}
       </ul>
+
+      {editingVehicle && (
+        <div className="fixed inset-0 w-full h-full bg-gradient-to-r from-blue-500 p-12 flex justify-center items-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+            <button
+              onClick={() => setEditingVehicle(null)}
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+            >
+              <FaTimes size={20} />
+            </button>
+            <h3 className="text-2xl font-semibold text-center text-gray-800 mb-4">
+              Editar Veículo
+            </h3>
+            <div className="grid gap-4">
+              <input
+                type="text"
+                name="brand"
+                value={formValues.brand}
+                readOnly
+                className="border-2 p-2 rounded-md bg-gray-300 cursor-not-allowed text-black"
+              />
+              <input
+                type="text"
+                name="model"
+                value={formValues.model}
+                readOnly
+                className="border-2 p-2 rounded-md bg-gray-300 cursor-not-allowed text-black"
+              />
+              <input
+                type="text"
+                name="plate"
+                value={formValues.plate}
+                onChange={handleChange}
+                className="border-2 p-2 rounded-md text-black"
+              />
+              <input
+                type="text"
+                name="year"
+                value={formValues.year}
+                onChange={handleChange}
+                className="border-2 p-2 rounded-md text-black"
+              />
+              <input
+                type="text"
+                name="color"
+                value={formValues.color}
+                onChange={handleChange}
+                className="border-2 p-2 rounded-md text-black"
+              />
+              <select
+                name="status"
+                value={formValues.status}
+                onChange={handleChange}
+                className="border-2 p-2 rounded-md text-black"
+              >
+                <option value="Disponível">Disponível</option>
+                <option value="Vendido">Vendido</option>
+                <option value="Em manutenção">Em manutenção</option>
+              </select>
+              <button
+                onClick={handleSave}
+                className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+              >
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
