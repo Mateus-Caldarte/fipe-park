@@ -423,9 +423,9 @@ const VehicleForm: React.FC = () => {
               <option value="" disabled>
                 Selecione o Status
               </option>
-              <option value="disponivel">Disponível</option>
-              <option value="vendido">Vendido</option>
-              <option value="Em manutencao">Em manutenção</option>
+              <option value="Disponível">Disponível</option>
+              <option value="Vendido">Vendido</option>
+              <option value="Em manutenção">Em manutenção</option>
             </select>
           </div>
         </div>

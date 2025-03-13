@@ -34,6 +34,7 @@ const VehicleList: React.FC = () => {
     color: "",
     status: "Disponível",
   });
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
   useEffect(() => {
     const storedVehicles = localStorage.getItem("vehicles");
@@ -144,15 +145,41 @@ const VehicleList: React.FC = () => {
     localStorage.setItem("vehicles", JSON.stringify(updatedVehicles));
   };
 
+  const handleStatusFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const filteredVehicles = statusFilter
+    ? data.filter((vehicle) => vehicle.status === statusFilter)
+    : data;
+
   return (
     <div className="w-full max-w-5xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-lg">
+      {data.length > 0 && (
+        <div className="mb-4">
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+            className="border-2 p-2 rounded-md"
+          >
+            <option value="">Todos</option>
+            <option value="Disponível">Disponível</option>
+            <option value="Vendido">Vendido</option>
+            <option value="Em manutenção">Em manutenção</option>
+          </select>
+        </div>
+      )}
+
       <ul className="space-y-4">
-        {data.length === 0 ? (
+        {filteredVehicles.length === 0 ? (
           <li className="text-center text-gray-500">
-            Nenhum veículo cadastrado.
+            Nenhum veículo encontrado com esse status.
           </li>
         ) : (
-          data.map((vehicle) => (
+          filteredVehicles.map((vehicle) => (
             <li
               key={vehicle.id}
               className="bg-gray-100 p-6 rounded-lg shadow-md"
