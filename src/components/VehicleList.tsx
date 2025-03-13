@@ -1,18 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { removeVehicle, updateVehicle } from "../store/ducks/vehicles/slice";
+import {
+  removeVehicle,
+  updateVehicle,
+  setVehicles,
+} from "../store/ducks/vehicles/slice";
 import { VehiclesState } from "../store/ducks/vehicles/types";
 
-// Funções para as máscaras
 const maskPlate = (plate: string) => {
   return plate
     .toUpperCase()
     .replace(/[^A-Za-z0-9]/g, "")
-    .slice(0, 7); // Limita a 7 caracteres
+    .slice(0, 7);
 };
 
 const maskYear = (year: string) => {
-  return year.replace(/\D/g, "").slice(0, 4); // Limita a 4 dígitos
+  return year.replace(/\D/g, "").slice(0, 4);
 };
 
 const VehicleList: React.FC = () => {
@@ -28,17 +31,31 @@ const VehicleList: React.FC = () => {
     plate: "",
     year: "",
     color: "",
+    status: "Disponível",
   });
+
+  useEffect(() => {
+    const storedVehicles = localStorage.getItem("vehicles");
+    if (storedVehicles) {
+      dispatch(setVehicles(JSON.parse(storedVehicles)));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (editingVehicle) {
+      setFormValues({
+        brand: editingVehicle.brand,
+        model: editingVehicle.model,
+        plate: editingVehicle.plate,
+        year: editingVehicle.year,
+        color: editingVehicle.color,
+        status: editingVehicle.status || "Disponível",
+      });
+    }
+  }, [editingVehicle]);
 
   const startEditing = (vehicle: any) => {
     setEditingVehicle(vehicle);
-    setFormValues({
-      brand: vehicle.brand,
-      model: vehicle.model,
-      plate: vehicle.plate,
-      year: vehicle.year,
-      color: vehicle.color,
-    });
   };
 
   const handleSave = () => {
@@ -47,56 +64,71 @@ const VehicleList: React.FC = () => {
       !formValues.model ||
       !formValues.plate ||
       !formValues.year ||
-      !formValues.color
+      !formValues.color ||
+      !formValues.status
     ) {
       alert("Por favor, preencha todos os campos.");
       return;
     }
 
-    if (editingVehicle) {
-      const existingVehicle = data.find(
-        (v) => v.brand === formValues.brand && v.model === formValues.model
+    const plateExists = data.some(
+      (vehicle) => vehicle.plate === formValues.plate
+    );
+
+    if (
+      plateExists &&
+      (!editingVehicle || editingVehicle.plate !== formValues.plate)
+    ) {
+      alert(
+        "A placa já está cadastrada. Por favor, insira uma placa diferente."
       );
-
-      if (existingVehicle) {
-        const updatedVehicle = { ...existingVehicle, ...formValues };
-        dispatch(updateVehicle(updatedVehicle));
-      } else {
-        const newVehicle = {
-          ...formValues,
-          id: `${formValues.brand}-${formValues.model}`,
-          status: "available",
-        };
-        dispatch(updateVehicle(newVehicle));
-      }
-
-      setEditingVehicle(null);
-      setFormValues({
-        brand: "",
-        model: "",
-        plate: "",
-        year: "",
-        color: "",
-      });
+      return;
     }
+
+    if (editingVehicle) {
+      const updatedVehicle = { ...editingVehicle, ...formValues };
+      dispatch(updateVehicle(updatedVehicle));
+
+      const updatedVehicles = data.map((vehicle) =>
+        vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
+      );
+      localStorage.setItem("vehicles", JSON.stringify(updatedVehicles));
+    } else {
+      const newVehicle = { ...formValues, id: new Date().toISOString() };
+      dispatch(updateVehicle(newVehicle));
+
+      const updatedVehicles = [...data, newVehicle];
+      localStorage.setItem("vehicles", JSON.stringify(updatedVehicles));
+    }
+
+    setEditingVehicle(null);
+    setFormValues({
+      brand: "",
+      model: "",
+      plate: "",
+      year: "",
+      color: "",
+      status: "Disponível",
+    });
+
+    window.location.reload();
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     let updatedValue = value;
 
-    // Aplica as máscaras
     if (name === "plate") {
       updatedValue = maskPlate(value);
     } else if (name === "year") {
       updatedValue = maskYear(value);
-      // Restringe o ano a não ser maior que o ano atual
       const currentYear = new Date().getFullYear().toString();
       if (updatedValue > currentYear) {
-        updatedValue = currentYear; // Corrige se o ano for maior que o ano atual
+        updatedValue = currentYear;
       }
     } else if (name === "color") {
-      // Converte a cor para maiúscula
       updatedValue = value.toUpperCase();
     }
 
@@ -108,10 +140,15 @@ const VehicleList: React.FC = () => {
 
   const handleRemove = (id: string) => {
     dispatch(removeVehicle(id));
+
+    const updatedVehicles = data.filter((vehicle) => vehicle.id !== id);
+    localStorage.setItem("vehicles", JSON.stringify(updatedVehicles));
+
+    window.location.reload();
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-lg">
+    <div className="w-full max-w-5xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold text-gray-700 mb-4 text-center">
         Lista de Veículos Cadastrados
       </h2>
@@ -122,11 +159,10 @@ const VehicleList: React.FC = () => {
             Editar Veículo
           </h3>
           <div className="grid gap-4">
-            {/* Marca e Modelo são somente leitura */}
             <input
               type="text"
               name="brand"
-              value={formValues.brand}
+              value={`${formValues.brand} - Somente leitura na edição`}
               readOnly
               placeholder="Marca"
               className="border-2 p-2 rounded-md bg-gray-200 cursor-not-allowed"
@@ -139,7 +175,6 @@ const VehicleList: React.FC = () => {
               placeholder="Modelo"
               className="border-2 p-2 rounded-md bg-gray-200 cursor-not-allowed"
             />
-            {/* Campo de Placa com máscara */}
             <input
               type="text"
               name="plate"
@@ -148,7 +183,6 @@ const VehicleList: React.FC = () => {
               placeholder="Placa"
               className="border-2 p-2 rounded-md"
             />
-            {/* Campo de Ano com máscara */}
             <input
               type="text"
               name="year"
@@ -165,6 +199,16 @@ const VehicleList: React.FC = () => {
               placeholder="Cor"
               className="border-2 p-2 rounded-md"
             />
+            <select
+              name="status"
+              value={formValues.status}
+              onChange={handleChange}
+              className="border-2 p-2 rounded-md"
+            >
+              <option value="Disponível">Disponível</option>
+              <option value="Vendido">Vendido</option>
+              <option value="Em manutenção">Em manutenção</option>
+            </select>
             <button
               onClick={handleSave}
               className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-all"
@@ -184,10 +228,10 @@ const VehicleList: React.FC = () => {
           data.map((vehicle) => (
             <li
               key={vehicle.id}
-              className="bg-gray-100 p-6 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center shadow-md"
+              className="bg-gray-100 p-6 rounded-lg shadow-md"
             >
-              <div className="flex flex-col md:flex-row items-start md:items-center mb-4 md:mb-0">
-                <div className="mr-4">
+              <div className="flex justify-between items-center">
+                <div>
                   <span className="font-semibold text-lg">
                     {vehicle.brand} - {vehicle.model}
                   </span>
@@ -195,23 +239,23 @@ const VehicleList: React.FC = () => {
                   <span className="text-gray-500">
                     {vehicle.plate} • {vehicle.year} • {vehicle.color}
                   </span>
+                  <br />
+                  <span className="text-gray-700">{vehicle.status}</span>
                 </div>
-              </div>
-
-              {/* Botões à direita */}
-              <div className="flex ml-auto">
-                <button
-                  onClick={() => startEditing(vehicle)}
-                  className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition-all mb-2 md:mb-0 mr-4"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleRemove(vehicle.id)}
-                  className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-all"
-                >
-                  Remover
-                </button>
+                <div className="flex">
+                  <button
+                    onClick={() => startEditing(vehicle)}
+                    className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 mr-4"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleRemove(vehicle.id)}
+                    className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
+                  >
+                    Remover
+                  </button>
+                </div>
               </div>
             </li>
           ))

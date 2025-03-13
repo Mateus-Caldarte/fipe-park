@@ -45,19 +45,12 @@ const VehicleForm: React.FC = () => {
   const [brands, setBrands] = useState<{ label: string; value: string }[]>([]);
   const [models, setModels] = useState<{ label: string; value: string }[]>([]);
   const [years, setYears] = useState<{ label: string; value: string }[]>([]);
-  const [loading] = useState(false);
   const [isBrandLoading, setIsBrandLoading] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [vehicles, setVehicles] = useState<any[]>(
     loadVehiclesFromLocalStorage()
   );
   const [successMessage, setSuccessMessage] = useState<string>("");
-
-  const checkIfPlateExists = (plate: string): boolean => {
-    return vehicles.some(
-      (vehicle: { plate: string }) => vehicle.plate === plate
-    );
-  };
 
   useEffect(() => {
     const loadBrands = async () => {
@@ -78,21 +71,33 @@ const VehicleForm: React.FC = () => {
     loadBrands();
   }, [vehicle.vehicleType]);
 
+  useEffect(() => {
+    const storedVehicles = localStorage.getItem("vehicles");
+    if (storedVehicles) {
+      setVehicles(JSON.parse(storedVehicles));
+    }
+  }, []);
+
+  const checkIfPlateExists = (plate: string): boolean => {
+    return vehicles.some((vehicle) => vehicle.plate === plate);
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
+    let newValue = value;
+
     if (name === "plate") {
-      setVehicle((prev) => ({ ...prev, plate: maskPlate(value) }));
+      newValue = maskPlate(value);
     } else if (name === "year") {
-      setVehicle((prev) => ({ ...prev, year: maskYear(value) }));
+      newValue = maskYear(value);
     } else if (name === "color") {
-      const cleanedColor = value.replace(/[^a-zA-Z]/g, "").toUpperCase();
-      setVehicle((prev) => ({ ...prev, color: cleanedColor }));
-    } else {
-      setVehicle((prev) => ({ ...prev, [name]: value }));
+      newValue = value.replace(/[^a-zA-Z]/g, "").toUpperCase();
     }
+
+    setVehicle({ ...vehicle, [name]: newValue });
   };
 
   const handleVehicleTypeChange = async (
@@ -114,11 +119,11 @@ const VehicleForm: React.FC = () => {
     const selectedBrand = brands.find(
       (brand) => brand.value === selectedBrandId
     );
-    const brandName = selectedBrand ? selectedBrand.label : ""; // Pega o nome da marca
+    const brandName = selectedBrand ? selectedBrand.label : "";
 
     setVehicle((prev) => ({
       ...prev,
-      brand: brandName, // Salva o nome da marca em vez do ID
+      brand: brandName,
       model: "",
       year: "",
       value: 0,
@@ -128,17 +133,12 @@ const VehicleForm: React.FC = () => {
       setIsModelLoading(true);
       try {
         const data = await fetchModels(vehicle.vehicleType, selectedBrandId);
-        if (data && Array.isArray(data)) {
-          const formattedModels = data.map(
-            (item: { label: string; value: string }) => ({
-              label: item.label,
-              value: item.value,
-            })
-          );
-          setModels(formattedModels);
-        } else {
-          setModels([]);
-        }
+        setModels(
+          data.map((item: { label: string; value: string }) => ({
+            label: item.label,
+            value: item.value,
+          }))
+        );
       } catch (error) {
         setModels([]);
       } finally {
@@ -197,7 +197,8 @@ const VehicleForm: React.FC = () => {
       !vehicle.model ||
       !vehicle.year ||
       !vehicle.plate ||
-      !vehicle.color
+      !vehicle.color ||
+      !vehicle.status
     ) {
       alert("Por favor, preencha todos os campos antes de cadastrar.");
       return;
@@ -212,11 +213,15 @@ const VehicleForm: React.FC = () => {
       ...vehicles,
       { ...vehicle, id: new Date().toISOString() },
     ];
+
+    saveVehiclesToLocalStorage(updatedVehicles);
+
     setVehicles(updatedVehicles);
-    saveVehiclesToLocalStorage(updatedVehicles); // Salva a lista com o nome da marca
+
     dispatch(addVehicle({ ...vehicle, id: new Date().toISOString() }));
 
     setSuccessMessage("Veículo cadastrado com sucesso!");
+
     setVehicle({
       brand: "",
       model: "",
@@ -227,7 +232,21 @@ const VehicleForm: React.FC = () => {
       value: 0,
       vehicleType: "",
     });
+
     setTimeout(() => setSuccessMessage(""), 3000);
+  };
+
+  const isFormValid = () => {
+    return (
+      vehicle.brand &&
+      vehicle.model &&
+      vehicle.year &&
+      vehicle.plate &&
+      vehicle.color &&
+      vehicle.status &&
+      vehicle.vehicleType &&
+      vehicle.year.length === 4
+    );
   };
 
   return (
@@ -240,7 +259,6 @@ const VehicleForm: React.FC = () => {
           Adicionar Veículo
         </h2>
 
-        {/* Exibe a mensagem de sucesso */}
         {successMessage && (
           <div className="text-green-500 text-center mb-4">
             {successMessage}
@@ -400,17 +418,26 @@ const VehicleForm: React.FC = () => {
               className="block w-full mt-2 p-4 rounded-lg border border-gray-300 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={vehicle.status}
               onChange={handleChange}
+              required
             >
-              <option value="">Selecione o Status</option>
-              <option value="disponível">Disponível</option>
-              <option value="indisponível">Indisponível</option>
+              <option value="" disabled>
+                Selecione o Status
+              </option>
+              <option value="disponivel">Disponível</option>
+              <option value="vendido">Vendido</option>
+              <option value="Em manutencao">Em manutenção</option>
             </select>
           </div>
         </div>
 
         <button
           type="submit"
-          className="mt-6 w-full py-4 px-6 bg-blue-500 text-white text-xl font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-600"
+          className={`mt-6 w-full py-4 px-6 text-white text-xl font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            isFormValid()
+              ? "bg-blue-500 hover:bg-blue-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+          disabled={!isFormValid()}
         >
           Cadastrar Veículo
         </button>
