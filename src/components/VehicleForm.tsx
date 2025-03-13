@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addVehicle } from "../store/ducks/vehicles/slice";
 import {
   fetchBrandsByType,
@@ -9,16 +9,35 @@ import {
 } from "../services/api";
 import { FaSpinner } from "react-icons/fa";
 
+const maskPlate = (plate: string) => {
+  return plate
+    .toUpperCase()
+    .replace(/[^A-Za-z0-9]/g, "")
+    .slice(0, 7);
+};
+
+const maskYear = (year: string) => {
+  return year.replace(/\D/g, "").slice(0, 4);
+};
+
+const loadVehiclesFromLocalStorage = () => {
+  const storedVehicles = localStorage.getItem("vehicles");
+  return storedVehicles ? JSON.parse(storedVehicles) : [];
+};
+
+const saveVehiclesToLocalStorage = (vehicles: any) => {
+  localStorage.setItem("vehicles", JSON.stringify(vehicles));
+};
+
 const VehicleForm: React.FC = () => {
   const dispatch = useDispatch();
-
   const [vehicle, setVehicle] = useState({
     brand: "",
     model: "",
     year: "",
     plate: "",
     color: "",
-    status: "Disponível",
+    status: "",
     value: 0,
     vehicleType: "",
   });
@@ -29,6 +48,16 @@ const VehicleForm: React.FC = () => {
   const [loading] = useState(false);
   const [isBrandLoading, setIsBrandLoading] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
+  const [vehicles, setVehicles] = useState<any[]>(
+    loadVehiclesFromLocalStorage()
+  );
+  const [successMessage, setSuccessMessage] = useState<string>("");
+
+  const checkIfPlateExists = (plate: string): boolean => {
+    return vehicles.some(
+      (vehicle: { plate: string }) => vehicle.plate === plate
+    );
+  };
 
   useEffect(() => {
     const loadBrands = async () => {
@@ -53,7 +82,17 @@ const VehicleForm: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setVehicle((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "plate") {
+      setVehicle((prev) => ({ ...prev, plate: maskPlate(value) }));
+    } else if (name === "year") {
+      setVehicle((prev) => ({ ...prev, year: maskYear(value) }));
+    } else if (name === "color") {
+      const cleanedColor = value.replace(/[^a-zA-Z]/g, "").toUpperCase();
+      setVehicle((prev) => ({ ...prev, color: cleanedColor }));
+    } else {
+      setVehicle((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleVehicleTypeChange = async (
@@ -115,9 +154,17 @@ const VehicleForm: React.FC = () => {
     }
   };
 
-  const handleYearChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const year = e.target.value;
-    setVehicle({ ...vehicle, year });
+  const handleYearChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const year = e.target.value.replace(/\D/g, "");
+    const currentYear = new Date().getFullYear();
+    const validYear = parseInt(year, 10);
+
+    if (validYear > currentYear) {
+      alert("O ano não pode ser maior que o ano atual.");
+      return;
+    }
+
+    setVehicle({ ...vehicle, year: year.slice(0, 4) });
 
     if (vehicle.brand && vehicle.model && year) {
       try {
@@ -133,7 +180,43 @@ const VehicleForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (
+      !vehicle.brand ||
+      !vehicle.model ||
+      !vehicle.year ||
+      !vehicle.plate ||
+      !vehicle.color
+    ) {
+      alert("Por favor, preencha todos os campos antes de cadastrar.");
+      return;
+    }
+
+    if (checkIfPlateExists(vehicle.plate)) {
+      alert("Essa placa já foi cadastrada.");
+      return;
+    }
+
+    const updatedVehicles = [
+      ...vehicles,
+      { ...vehicle, id: new Date().toISOString() },
+    ];
+    setVehicles(updatedVehicles);
+    saveVehiclesToLocalStorage(updatedVehicles);
     dispatch(addVehicle({ ...vehicle, id: new Date().toISOString() }));
+
+    setSuccessMessage("Veículo cadastrado com sucesso!");
+    setVehicle({
+      brand: "",
+      model: "",
+      year: "",
+      plate: "",
+      color: "",
+      status: "",
+      value: 0,
+      vehicleType: "",
+    });
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   return (
@@ -145,6 +228,13 @@ const VehicleForm: React.FC = () => {
         <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">
           Adicionar Veículo
         </h2>
+
+        {/* Exibe a mensagem de sucesso */}
+        {successMessage && (
+          <div className="text-green-500 text-center mb-4">
+            {successMessage}
+          </div>
+        )}
 
         <div className="space-y-6">
           <div>
@@ -237,21 +327,16 @@ const VehicleForm: React.FC = () => {
             >
               Ano
             </label>
-            <select
-              name="year"
+            <input
               id="year"
+              name="year"
+              type="text"
+              maxLength={4}
               className="block w-full mt-2 p-4 rounded-lg border border-gray-300 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onChange={handleYearChange}
+              placeholder="Ano (Ex: 2025)"
               value={vehicle.year}
-              disabled={!vehicle.model}
-            >
-              <option value="">Selecione o Ano</option>
-              {years.map((year) => (
-                <option key={year.value} value={year.value}>
-                  {year.label}
-                </option>
-              ))}
-            </select>
+              onChange={handleYearChange}
+            />
           </div>
 
           <div>
@@ -265,7 +350,7 @@ const VehicleForm: React.FC = () => {
               id="plate"
               name="plate"
               className="block w-full mt-2 p-4 rounded-lg border border-gray-300 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Placa"
+              placeholder="Placa (Ex: ABC-1234)"
               onChange={handleChange}
               value={vehicle.plate}
             />
@@ -303,27 +388,9 @@ const VehicleForm: React.FC = () => {
               value={vehicle.status}
             >
               <option value="Disponível">Disponível</option>
-              <option value="Indisponível">Indisponível</option>
+              <option value="Indisponível">Vendido</option>
+              <option value="Indisponível">Em manutenção</option>
             </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="value"
-              className="block text-sm font-semibold text-gray-600 mb-2"
-            >
-              Valor
-            </label>
-            <input
-              id="value"
-              name="value"
-              type="number"
-              className="block w-full mt-2 p-4 rounded-lg border border-gray-300 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Valor"
-              onChange={handleChange}
-              value={vehicle.value}
-              disabled
-            />
           </div>
         </div>
 
