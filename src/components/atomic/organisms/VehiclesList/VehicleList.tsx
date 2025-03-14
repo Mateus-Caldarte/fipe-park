@@ -6,18 +6,8 @@ import {
   setVehicles,
 } from "../../../../store/ducks/vehicles/slice";
 import { VehiclesState } from "../../../../store/ducks/vehicles/types";
+import { maskPlate, maskYear } from "../../../../utils/functions";
 import { FaTimes } from "react-icons/fa";
-
-const maskPlate = (plate: string) => {
-  return plate
-    .toUpperCase()
-    .replace(/[^A-Za-z0-9]/g, "")
-    .slice(0, 7);
-};
-
-const maskYear = (year: string) => {
-  return year.replace(/\D/g, "").slice(0, 4);
-};
 
 const VehicleList: React.FC = () => {
   const { data } = useSelector(

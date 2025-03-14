@@ -3,26 +3,12 @@ import { useDispatch } from "react-redux";
 import { addVehicle } from "../../../../store/ducks/vehicles/slice";
 import { fetchBrandsByType, fetchModels } from "../../../../services/api";
 import { FaSpinner } from "react-icons/fa";
-
-const maskPlate = (plate: string) => {
-  return plate
-    .toUpperCase()
-    .replace(/[^A-Za-z0-9]/g, "")
-    .slice(0, 7);
-};
-
-const maskYear = (year: string) => {
-  return year.replace(/\D/g, "").slice(0, 4);
-};
-
-const loadVehiclesFromLocalStorage = () => {
-  const storedVehicles = localStorage.getItem("vehicles");
-  return storedVehicles ? JSON.parse(storedVehicles) : [];
-};
-
-const saveVehiclesToLocalStorage = (vehicles: any) => {
-  localStorage.setItem("vehicles", JSON.stringify(vehicles));
-};
+import {
+  maskPlate,
+  maskYear,
+  loadVehiclesFromLocalStorage,
+  saveVehiclesToLocalStorage,
+} from "../../../../utils/functions";
 
 const VehicleForm: React.FC = () => {
   const dispatch = useDispatch();
@@ -205,6 +191,9 @@ const VehicleForm: React.FC = () => {
       vehicleType: "",
     });
 
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
